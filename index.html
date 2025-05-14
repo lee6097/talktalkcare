@@ -192,7 +192,7 @@
         removeLastBubble();
         
         messages.push({ role: 'assistant', content: data.reply });
-        removeLastBubble();
+        
         appendBubble(data.reply, 'ai');
       } catch (err) {
         removeLastBubble();
@@ -218,8 +218,8 @@
       // 메시지 텍스트와 복사 버튼을 묶음
       const messageContainer = document.createElement('div');
       const messageText = document.createElement('span');
-      messageText.innerHTML = text;
-      messageContainer.appendChild(messageText);
+      messageText.innerHTML = escapeHtml(text);
+
 
       // 복사 버튼 생성
       const copyButton = document.createElement('button');
