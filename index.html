@@ -112,15 +112,15 @@
     }
 
     .copy-btn {
-      font-size: 12px;
-      padding: 4px 6px;
+      font-size: 7px; /* 더 작게 */
+      padding: 2px 4px;
       background: transparent;
       color: #666;
       border: 1px solid #ccc;
       border-radius: 4px;
-      margin-left: 6px;
+      position: absolute;
+      opacity: 0.6;
       cursor: pointer;
-      opacity: 0.7;
     }
 
     .copy-btn:hover {
@@ -144,6 +144,22 @@
 
     .allcopy-btn:focus {
       outline: none;
+    }
+
+    .bubble-wrapper {
+      position: relative;
+      display: inline-block;
+      max-width: 80%;
+    }
+
+    .bubble-wrapper.user .copy-btn {
+      left: 0;
+      bottom: -20px;
+    }
+
+    .bubble-wrapper.ai .copy-btn {
+      right: 0;
+      bottom: -20px;
     }
   </style>
 </head>
