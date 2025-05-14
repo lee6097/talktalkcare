@@ -262,10 +262,19 @@
 
     function copyAll() {
       let allMessages = '';
-      const bubbles = document.getElementsByClassName('bubble');
-      for (let bubble of bubbles) {
-        allMessages += bubble.innerText + '\n';
+      const containers = document.getElementsByClassName('bubble-container');
+
+      for (let container of containers) {
+        const bubble = container.querySelector('.bubble');
+        if (!bubble) continue;
+
+        const isUser = bubble.classList.contains('user');
+        const label = isUser ? '사용자' : '톡톡케어';
+        const text = bubble.innerText.trim();
+
+        allMessages += `${label}: ${text}\n\n`;
       }
+
       copyToClipboard(allMessages.trim());
     }
   </script>
