@@ -210,18 +210,21 @@
       div.className = `bubble ${sender}`;
       div.innerHTML = escapeHtml(text);  // 텍스트에서 줄바꿈을 <br>으로 변환
 
-        // 메시지 텍스트
+      // 메시지 텍스트와 복사 버튼을 묶음
+      const messageContainer = document.createElement('div');
       const messageText = document.createElement('span');
       messageText.innerHTML = escapeHtml(text);
+      messageContainer.appendChild(messageText);
+
+      // 복사 버튼 생성
       const copyButton = document.createElement('button');
       copyButton.textContent = '📋';
       copyButton.className = 'copy-btn';
       copyButton.onclick = () => {
-         copyToClipboard(text);
+        copyToClipboard(text);
+        appendBubble('📋 복사 완료!', 'ai');  // 복사 완료 메시지
       };
-        // 메시지 텍스트와 복사 버튼을 묶음
-      const messageContainer = document.createElement('div');
-      messageContainer.appendChild(messageText);
+
       messageContainer.appendChild(copyButton);
 
       // 추가
@@ -229,10 +232,11 @@
       chat.appendChild(div);
       chat.scrollTop = chat.scrollHeight;
     }
-    
+
     // 전체 대화 복사 버튼 추가
-    const copyAllBtn = document.createElement('allcopy-btn');
+    const copyAllBtn = document.createElement('button');
     copyAllBtn.textContent = '📝 전체 복사';
+    copyAllBtn.className = 'allcopy-btn';
     copyAllBtn.onclick = () => {
       let allMessages = '';
       const bubbles = document.getElementsByClassName('bubble');
@@ -240,6 +244,7 @@
         allMessages += bubble.innerText + '\n';
       }
       copyToClipboard(allMessages);
+      appendBubble('📋 전체 복사 완료!', 'ai');  // 전체 복사 완료 메시지
     };
     document.body.appendChild(copyAllBtn);
 
@@ -248,6 +253,15 @@
       if (bubbles.length) {
         chat.removeChild(bubbles[bubbles.length - 1]);
       }
+    }
+
+    function copyToClipboard(text) {
+      const tempInput = document.createElement('input');
+      tempInput.value = text;
+      document.body.appendChild(tempInput);
+      tempInput.select();
+      document.execCommand('copy');
+      document.body.removeChild(tempInput);
     }
   </script>
   <!-- 숨겨진 관리자 버튼 -->
