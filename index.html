@@ -227,11 +227,10 @@
 
       // 복사 버튼 생성
       const copyButton = document.createElement('button');
-      copyButton.textContent = '📋';
+      copyButton.textContent = '📋복사';
       copyButton.className = 'copy-btn';
       copyButton.onclick = () => {
         copyToClipboard(text);
-        appendBubble('📋 복사 완료!', 'ai');  // 복사 완료 메시지
       };
 
       messageContainer.appendChild(copyButton);
@@ -256,7 +255,6 @@
         }
       }
       copyToClipboard(allMessages.trim());
-      appendBubble('📋 전체 복사 완료!', 'ai');
     };
 
     function removeLastBubble() {
