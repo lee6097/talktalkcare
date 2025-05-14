@@ -103,6 +103,41 @@
     .reset-btn:hover {
       background: #666;
     }
+
+    .copy-btn {
+      margin-left: 10px;
+      background: #0078d7;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      padding: 3px 8px;
+      cursor: pointer;
+    }
+
+    .copy-btn:hover {
+      background: #005fa3;
+    }
+
+    /* 전체 복사 버튼 스타일 */
+    allcopy-btn {
+      padding: 8px 12px;
+      border: none;
+      border-radius: 8px;
+      background: #0078d7;
+      color: white;
+      cursor: pointer;
+    }
+
+    allcopy-btn:hover {
+      background: #005fa3;
+    }
+
+    allcopy-btn:focus {
+      outline: none;
+    }
+
+
+
   </style>
 </head>
 <body>
@@ -162,14 +197,51 @@
         userInput.focus();
       }
     };
+    
+    // 줄바꿈을 <br> 태그로 변환하는 함수
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.appendChild(document.createTextNode(text));
+      return div.innerHTML.replace(/\n/g, "<br>");
+    }
 
     function appendBubble(text, sender) {
       const div = document.createElement('div');
       div.className = `bubble ${sender}`;
-      div.textContent = text;
+      div.innerHTML = escapeHtml(text);  // 텍스트에서 줄바꿈을 <br>으로 변환
+
+        // 메시지 텍스트
+      const messageText = document.createElement('span');
+      messageText.innerHTML = escapeHtml(text);
+      const copyButton = document.createElement('button');
+      copyButton.textContent = '📋';
+      copyButton.className = 'copy-btn';
+      copyButton.onclick = () => {
+         copyToClipboard(text);
+      };
+        // 메시지 텍스트와 복사 버튼을 묶음
+      const messageContainer = document.createElement('div');
+      messageContainer.appendChild(messageText);
+      messageContainer.appendChild(copyButton);
+
+      // 추가
+      div.appendChild(messageContainer);
       chat.appendChild(div);
       chat.scrollTop = chat.scrollHeight;
     }
+    
+    // 전체 대화 복사 버튼 추가
+    const copyAllBtn = document.createElement('allcopy-btn');
+    copyAllBtn.textContent = '📝 전체 복사';
+    copyAllBtn.onclick = () => {
+      let allMessages = '';
+      const bubbles = document.getElementsByClassName('bubble');
+      for (let bubble of bubbles) {
+        allMessages += bubble.innerText + '\n';
+      }
+      copyToClipboard(allMessages);
+    };
+    document.body.appendChild(copyAllBtn);
 
     function removeLastBubble() {
       const bubbles = chat.getElementsByClassName('bubble');
