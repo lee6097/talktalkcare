@@ -63,6 +63,12 @@ app.get('/admin', (req, res) => {
   });
 });
 
-app.listen(3000, () => {
-  console.log('Server running on port 3000');
-});
+
+// ✅ 아래로 대체
+async function startServer() {
+  await initializeMetrics();
+  app.listen(3000, () => {
+    console.log('✅ 서버가 3000번 포트에서 실행 중입니다');
+  });
+}
+startServer();
