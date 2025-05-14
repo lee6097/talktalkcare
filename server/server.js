@@ -34,14 +34,28 @@ async function initializeMetrics() {
     .single();
 
   if (error) {
-    console.error('초기화 오류:', error.message);
+    if (error.message.includes('no rows returned')) {
+      // id=1이 없으면 새로 삽입
+      const { error: insertError } = await supabase
+        .from('metrics')
+        .insert([{ id: 1, pageViews: 0, messageCount: 0 }]);
+
+      if (insertError) {
+        console.error('데이터 삽입 오류:', insertError.message);
+      } else {
+        console.log('id = 1 데이터를 새로 삽입');
+      }
+    } else {
+      console.error('초기화 오류:', error.message);
+    }
   } else if (data) {
     pageViews = data.pageViews || 0;
     messageCount = data.messageCount || 0;
     console.log('Supabase 초기화 완료:', { pageViews, messageCount });
   }
 }
-initializeMetrics();
+
+
 
 async function updateMetrics() {
   const { error } = await supabase
