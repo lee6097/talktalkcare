@@ -53,9 +53,7 @@
 
     .bubble-container {
       display: flex;
-      flex-direction: column;
-      align-items: stretch;
-      position: relative;
+      align-items: flex-end; /* 아랫단 맞춤 */
       margin: 8px 0;
     }
 
@@ -64,7 +62,6 @@
       border-radius: 10px;
       max-width: 80%;
       word-wrap: break-word;
-      position: relative;
     }
 
     .user {
@@ -121,11 +118,10 @@
       color: #666;
       border: 1px solid #ccc;
       border-radius: 4px;
-      opacity: 0.6;
       cursor: pointer;
       height: 22px;
-      margin-top: 4px;
-     align-self: flex-end;
+      margin: 0 4px;
+      flex-shrink: 0;
     }
 
     .copy-btn:hover {
@@ -133,6 +129,14 @@
       opacity: 1;
     }
 
+    .user-container {
+      justify-content: flex-end;
+    }
+
+    .ai-container {
+      justify-content: flex-start;
+    }
+    
     .allcopy-btn {
       padding: 8px 12px;
       border: none;
@@ -214,9 +218,9 @@
       return div.innerHTML.replace(/\n/g, "<br>");
     }
 
-     function appendBubble(text, sender) {
+    function appendBubble(text, sender) {
       const container = document.createElement('div');
-      container.className = 'bubble-container';
+      container.className = `bubble-container ${sender}-container`;
 
       const bubble = document.createElement('div');
       bubble.className = `bubble ${sender}`;
@@ -227,12 +231,20 @@
       copyBtn.textContent = '📋 복사';
       copyBtn.onclick = () => copyToClipboard(text);
 
-      container.appendChild(bubble);
-      container.appendChild(copyBtn);
+      if (sender === 'user') {
+        // 사용자 말풍선: 복사 버튼 → 말풍선
+       container.appendChild(copyBtn);
+        container.appendChild(bubble);
+      } else {
+        // 상담자 말풍선: 말풍선 → 복사 버튼
+        container.appendChild(bubble);
+        container.appendChild(copyBtn);
+      }
 
       chat.appendChild(container);
       chat.scrollTop = chat.scrollHeight;
     }
+
 
     function removeLastBubble() {
       const last = chat.lastElementChild;
