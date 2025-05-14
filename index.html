@@ -104,18 +104,22 @@
       background: #666;
     }
 
-    .copy-btn {
-      margin-left: 10px;
-      background: #0078d7;
-      color: white;
+   .copy-btn {
+      margin-left: 8px;
+      background: transparent;
+      color: #888;
       border: none;
-      border-radius: 5px;
-      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 14px;
       cursor: pointer;
+      opacity: 0.6;
+      transition: opacity 0.2s ease;
     }
 
     .copy-btn:hover {
-      background: #005fa3;
+      color: #000;
+      opacity: 1;
+      background: rgba(0, 0, 0, 0.05);
     }
 
     /* 전체 복사 버튼 스타일 */
@@ -246,12 +250,14 @@
       let allMessages = '';
       const bubbles = document.getElementsByClassName('bubble');
       for (let bubble of bubbles) {
-        allMessages += bubble.innerText + '\n';
+        const span = bubble.querySelector('span');
+        if (span) {
+          allMessages += span.innerText + '\n';
+        }
       }
-      copyToClipboard(allMessages);
-      appendBubble('📋 전체 복사 완료!', 'ai');  // 전체 복사 완료 메시지
+      copyToClipboard(allMessages.trim());
+      appendBubble('📋 전체 복사 완료!', 'ai');
     };
-    document.body.appendChild(copyAllBtn);
 
     function removeLastBubble() {
       const bubbles = chat.getElementsByClassName('bubble');
