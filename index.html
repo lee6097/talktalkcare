@@ -54,7 +54,7 @@
     .bubble-container {
       display: flex;
       flex-direction: column;
-      align-items: flex-start;
+      align-items: stretch;
       position: relative;
       margin: 8px 0;
     }
@@ -124,8 +124,8 @@
       opacity: 0.6;
       cursor: pointer;
       height: 22px;
-      align-self: flex-end;
-      margin-bottom: 2px;
+      margin-top: 4px;
+     align-self: flex-end;
     }
 
     .copy-btn:hover {
@@ -214,15 +214,9 @@
       return div.innerHTML.replace(/\n/g, "<br>");
     }
 
-    function appendBubble(text, sender) {
+     function appendBubble(text, sender) {
       const container = document.createElement('div');
       container.className = 'bubble-container';
-
-      const row = document.createElement('div');
-      row.style.display = 'flex';
-      row.style.alignItems = 'flex-end';
-      row.style.justifyContent = sender === 'user' ? 'flex-end' : 'flex-start';
-      row.style.gap = '6px';
 
       const bubble = document.createElement('div');
       bubble.className = `bubble ${sender}`;
@@ -233,15 +227,9 @@
       copyBtn.textContent = '📋 복사';
       copyBtn.onclick = () => copyToClipboard(text);
 
-      if (sender === 'user') {
-        row.appendChild(copyBtn);  // 버튼이 왼쪽
-        row.appendChild(bubble);  // 말풍선이 오른쪽
-      } else {
-        row.appendChild(bubble);  // 말풍선이 왼쪽
-        row.appendChild(copyBtn); // 버튼이 오른쪽
-      }
+      container.appendChild(bubble);
+      container.appendChild(copyBtn);
 
-      container.appendChild(row);
       chat.appendChild(container);
       chat.scrollTop = chat.scrollHeight;
     }
