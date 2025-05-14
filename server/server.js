@@ -5,6 +5,13 @@ const OpenAI = require('openai');
 const path = require('path');
 require('dotenv').config();
 
+const { createClient } = require('@supabase/supabase-js');
+
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY // 보안 중요! 일반 공개 키 아님
+);
+
 const app = express();
 app.use(cors({
   origin: 'https://lee6097.github.io'
@@ -19,23 +26,50 @@ const openai = new OpenAI({
 let pageViews = 0;
 let messageCount = 0;
 
+async function initializeMetrics() {
+  const { data, error } = await supabase
+    .from('metrics')
+    .select('*')
+    .eq('id', 1)
+    .single();
+
+  if (error) {
+    console.error('초기화 오류:', error.message);
+  } else if (data) {
+    pageViews = data.pageViews || 0;
+    messageCount = data.messageCount || 0;
+    console.log('Supabase 초기화 완료:', { pageViews, messageCount });
+  }
+}
+initializeMetrics();
+
+async function updateMetrics() {
+  const { error } = await supabase
+    .from('metrics')
+    .update({ pageViews, messageCount })
+    .eq('id', 1);
+
+  if (error) console.error('Supabase 업데이트 오류:', error.message);
+}
+
 // 기존 루트 경로 (조회수 증가 제거)
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, '../index.html'));
 });
 
 // 새로 추가: 조회수 증가 전용 API
-app.get('/view', (req, res) => {
+app.get('/view', async (req, res) => {
   pageViews++;
+  await updateMetrics();
   console.log('Page Views:', pageViews);
-  res.sendStatus(200);  // 응답 OK
+  res.sendStatus(200);
 });
 
-// 메시지 보낼 때 메시지 수 증가
 app.post('/chat', async (req, res) => {
   messageCount++;
-  console.log('Message Count:', messageCount);  // 콘솔에서 확인
-  // OpenAI API 처리 코드
+  await updateMetrics();
+  console.log('Message Count:', messageCount);
+
   const { messages } = req.body;
   try {
     const completion = await openai.chat.completions.create({
@@ -63,6 +97,12 @@ app.get('/admin', (req, res) => {
   });
 });
 
-app.listen(3000, () => {
-  console.log('Server running on port 3000');
-});
+// 서버를 시작하는 함수
+async function startServer() {
+  await initializeMetrics(); // Supabase에서 값을 불러오는 비동기 함수
+  app.listen(3000, () => {
+    console.log('✅ 서버가 3000번 포트에서 실행 중입니다');
+  });
+}
+
+startServer(); // 서버 시작
