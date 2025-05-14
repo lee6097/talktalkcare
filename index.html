@@ -218,7 +218,7 @@
       // 메시지 텍스트와 복사 버튼을 묶음
       const messageContainer = document.createElement('div');
       const messageText = document.createElement('span');
-      messageText.innerHTML = escapeHtml(text);
+      messageText.innerHTML = text;
       messageContainer.appendChild(messageText);
 
       // 복사 버튼 생성
