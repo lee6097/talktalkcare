@@ -314,6 +314,21 @@
   </script>
 
   <script>
+    // Enter: 제출, Shift+Enter: 줄바꿈
+    document.addEventListener('DOMContentLoaded', () => {
+      const userInput = document.getElementById('userInput');
+      const form = document.getElementById('inputForm');
+
+      userInput.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault(); // 기본 줄바꿈 방지
+          form.dispatchEvent(new Event('submit')); // form 제출
+        }
+      });
+    });
+  </script>
+  
+  <script>
     document.addEventListener('DOMContentLoaded', () => {
       const userInput = document.getElementById('userInput');
       userInput.addEventListener('input', () => {
