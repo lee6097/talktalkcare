@@ -91,16 +91,16 @@
       font-family: 'Arial', sans-serif;
       line-height: 1.4;
       resize: none;
-      overflow-y: hidden; /* ← 중요: scroll 막고, JS가 높이 조절 */
+      overflow-y: auto; /* ← 중요: scroll 막고, JS가 높이 조절 */
       min-height: 20px;    /* PC 기본 높이 */
       max-height: 60px;    /* 최대 3줄 */
-      height: 20px;        /* 초기 높이 고정 */
+      height: auto;        /* 초기값 자동으로 */
     }
 
     @media (max-width: 768px) {
       #userInput {
-        min-height: 60px;  /* 모바일에서 기본 높이 증가 */
-        height: 40px;
+        min-height: 40px;  /* 모바일에서 기본 높이 증가 */
+        max-height: 60px;
       }
     }
 
@@ -293,14 +293,14 @@
     }
 
     userInput.addEventListener('input', () => {
-      const isMobile = window.innerWidth <= 768;
-      const baseHeight = isMobile ? 40 : 20;
+      userInput.style.height = 'auto'; // 먼저 높이 초기화
 
-      userInput.style.height = baseHeight + 'px'; // 기본 높이 초기화
+      // 최대 높이 제한 반영
+      const computed = window.getComputedStyle(userInput);
+      const maxHeight = parseFloat(computed.maxHeight);
 
-      const scrollHeight = userInput.scrollHeight;
-      const newHeight = Math.min(scrollHeight, 60);
-
+      // scrollHeight가 maxHeight보다 크면 maxHeight로 고정
+      const newHeight = Math.min(userInput.scrollHeight, maxHeight);
       userInput.style.height = newHeight + 'px';
     });
 
