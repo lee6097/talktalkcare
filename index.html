@@ -314,27 +314,35 @@
   </script>
 
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const userInput = document.getElementById('userInput');
-      userInput.addEventListener('input', () => {
-        userInput.style.height = 'auto'; // 먼저 높이 초기화
+  document.addEventListener('DOMContentLoaded', () => {
+    const userInput = document.getElementById('userInput');
 
-        // 최대 높이 제한 반영
-        const computed = window.getComputedStyle(userInput);
-        const maxHeight = parseFloat(computed.maxHeight);
+    const baseHeight = userInput.scrollHeight; // 한 줄 높이 기준
 
-        // scrollHeight가 maxHeight보다 크면 maxHeight로 고정
-        const newHeight = Math.min(userInput.scrollHeight, maxHeight);
+    userInput.addEventListener('input', () => {
+      userInput.style.height = 'auto'; // 초기화
+
+      const computed = window.getComputedStyle(userInput);
+      const maxHeight = parseFloat(computed.maxHeight);
+
+      // scrollHeight 계산
+      const newHeight = Math.min(userInput.scrollHeight, maxHeight);
+
+      // 한 줄 이상일 때만 height 늘리기
+      if (userInput.scrollHeight > baseHeight + 1) {
         userInput.style.height = newHeight + 'px';
+      } else {
+        userInput.style.height = baseHeight + 'px'; // 한 줄 유지
+      }
 
-        // ✅ 스크롤바 보이도록 설정 (모바일에서도 작동)
-        if (userInput.scrollHeight > maxHeight) {
-          userInput.style.overflowY = 'auto';
-        } else {
-          userInput.style.overflowY = 'hidden';
-        }
-      });
+      // 스크롤 표시 여부
+      if (userInput.scrollHeight > maxHeight) {
+        userInput.style.overflowY = 'auto';
+      } else {
+        userInput.style.overflowY = 'hidden';
+      }
     });
+  });
   </script>
   
 </body>
