@@ -302,6 +302,13 @@
       // scrollHeight가 maxHeight보다 크면 maxHeight로 고정
       const newHeight = Math.min(userInput.scrollHeight, maxHeight);
       userInput.style.height = newHeight + 'px';
+
+      // ✅ 스크롤바 보이도록 설정 (모바일에서도 작동)
+      if (userInput.scrollHeight > maxHeight) {
+        userInput.style.overflowY = 'auto';
+      } else {
+        userInput.style.overflowY = 'hidden';
+      }
     });
 
   <!-- 관리자 버튼 (숨김 처리) -->
