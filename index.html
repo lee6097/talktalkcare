@@ -87,6 +87,12 @@
       padding: 8px;
       border: 1px solid #ccc;
       border-radius: 8px;
+      resize: none;
+      max-height: 6em; /* 약 3줄 */
+      overflow-y: auto;
+      line-height: 1.5em;
+      font-family: inherit;
+      font-size: 1em;
     }
 
     button {
@@ -164,7 +170,7 @@
   <div id="chatbox">
     <div id="chat"></div>
     <form id="inputForm">
-      <input type="text" id="userInput" placeholder="불편한 증상 또는 궁금한 의학지식을 입력하세요." />
+      <textarea id="userInput" rows="1" placeholder="불편한 증상 또는 궁금한 의학지식을 입력하세요."></textarea>
       <button type="submit">보내기</button>
     </form>
     <button class="reset-btn" onclick="location.reload()">🔄 대화 초기화</button>
@@ -276,6 +282,11 @@
 
       copyToClipboard(allMessages.trim());
     }
+
+    userInput.addEventListener('input', () => {
+      userInput.style.height = 'auto'; // 높이 초기화
+      userInput.style.height = Math.min(userInput.scrollHeight, 96) + 'px'; // 최대 3줄 (약 96px)
+    });
   </script>
 
   <!-- 관리자 버튼 (숨김 처리) -->
