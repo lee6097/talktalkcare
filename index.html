@@ -292,6 +292,28 @@
       copyToClipboard(allMessages.trim());
     }
 
+
+    
+    
+  <!-- 관리자 버튼 (숨김 처리) -->
+  <button onclick="openAdmin()" style="display:none;" id="adminBtn">📊 관리자 페이지</button>
+  <script>
+    async function openAdmin() {
+      const password = prompt("🔐 관리자 비밀번호를 입력하세요");
+      const res = await fetch(`https://talktalkcare-server.onrender.com/admin?password=${encodeURIComponent(password)}`);
+      if (res.ok) {
+        const data = await res.json();
+        alert(`📊 페이지 조회수: ${data.pageViews}\n💬 메시지 수: ${data.messageCount}`);
+      } else {
+        alert('❌ 비밀번호가 틀렸습니다.');
+      }
+    }
+  </script>
+  <script>
+  fetch('https://talktalkcare-server.onrender.com/view');
+  </script>
+
+  <script>
     document.addEventListener('DOMContentLoaded', () => {
       const userInput = document.getElementById('userInput');
       userInput.addEventListener('input', () => {
@@ -313,23 +335,7 @@
         }
       });
     });
-      
-  <!-- 관리자 버튼 (숨김 처리) -->
-  <button onclick="openAdmin()" style="display:none;" id="adminBtn">📊 관리자 페이지</button>
-  <script>
-    async function openAdmin() {
-      const password = prompt("🔐 관리자 비밀번호를 입력하세요");
-      const res = await fetch(`https://talktalkcare-server.onrender.com/admin?password=${encodeURIComponent(password)}`);
-      if (res.ok) {
-        const data = await res.json();
-        alert(`📊 페이지 조회수: ${data.pageViews}\n💬 메시지 수: ${data.messageCount}`);
-      } else {
-        alert('❌ 비밀번호가 틀렸습니다.');
-      }
-    }
   </script>
-  <script>
-  fetch('https://talktalkcare-server.onrender.com/view');
-  </script>
+  
 </body>
 </html>
