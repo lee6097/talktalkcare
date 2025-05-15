@@ -91,15 +91,15 @@
       font-family: 'Arial', sans-serif;
       line-height: 1.4;
       resize: none;
-      overflow-y: auto;
-      min-height: 20px;
-      max-height: 96px;
-      height: 20px;
+      overflow-y: hidden; /* ← 중요: scroll 막고, JS가 높이 조절 */
+      min-height: 20px;    /* PC 기본 높이 */
+      max-height: 60px;    /* 최대 3줄 */
+      height: 20px;        /* 초기 높이 고정 */
     }
 
     @media (max-width: 768px) {
       #userInput {
-        min-height: 40px;
+        min-height: 60px;  /* 모바일에서 기본 높이 증가 */
         height: 40px;
       }
     }
@@ -293,14 +293,15 @@
     }
 
     userInput.addEventListener('input', () => {
-      const baseHeight = window.innerWidth <= 768 ? 48 : 32;
-      userInput.style.height = baseHeight + 'px'; // 기본 높이로 초기화
+      const isMobile = window.innerWidth <= 768;
+      const baseHeight = isMobile ? 40 : 20;
 
-      // scrollHeight를 읽어 새로 필요한 높이 계산 (최대 96px)
-      const newHeight = Math.min(userInput.scrollHeight, 96);
-      if (newHeight > baseHeight) {
-        userInput.style.height = newHeight + 'px';
-      }
+      userInput.style.height = baseHeight + 'px'; // 기본 높이 초기화
+
+      const scrollHeight = userInput.scrollHeight;
+      const newHeight = Math.min(scrollHeight, 60);
+
+      userInput.style.height = newHeight + 'px';
     });
 
   <!-- 관리자 버튼 (숨김 처리) -->
