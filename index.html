@@ -92,7 +92,16 @@
       line-height: 1.4;
       resize: none;
       overflow-y: auto;
-      max-height: 4.2em; /* 약 3줄 분량 (line-height * 3) */
+      min-height: 32px;
+      max-height: 96px;
+     height: 32px;
+    }
+
+    @media (max-width: 768px) {
+      #userInput {
+        min-height: 48px;
+        height: 48px;
+      }
     }
 
     button {
@@ -284,10 +293,15 @@
     }
 
     userInput.addEventListener('input', () => {
-      userInput.style.height = 'auto'; // 높이 초기화
-      userInput.style.height = Math.min(userInput.scrollHeight, 96) + 'px'; // 최대 3줄 (약 96px)
+      const baseHeight = window.innerWidth <= 768 ? 48 : 32;
+      userInput.style.height = baseHeight + 'px'; // 기본 높이로 초기화
+
+      // scrollHeight를 읽어 새로 필요한 높이 계산 (최대 96px)
+      const newHeight = Math.min(userInput.scrollHeight, 96);
+      if (newHeight > baseHeight) {
+        userInput.style.height = newHeight + 'px';
+      }
     });
-  </script>
 
   <!-- 관리자 버튼 (숨김 처리) -->
   <button onclick="openAdmin()" style="display:none;" id="adminBtn">📊 관리자 페이지</button>
