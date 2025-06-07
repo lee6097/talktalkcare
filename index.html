@@ -498,5 +498,20 @@
   <script>
     fetch('https://talktalkcare-server.onrender.com/view');
   </script>
+
+  <script>
+    let isFormDirty = false;
+
+    document.getElementById('userInput').addEventListener('input', () => {
+      isFormDirty = true;
+    });
+
+    window.addEventListener('beforeunload', function (e) {
+      if (isFormDirty) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    });
+  </script>
 </body>
 </html>
