@@ -18,7 +18,7 @@
     #chatbox {
       width: 100vw;
       max-width: 600px;
-      height: 100vh;
+      height: calc(var(--vh, 1vh) * 100); /* 수정된 부분 */
       display: flex;
       flex-direction: column;
       justify-content: space-between;
@@ -145,6 +145,15 @@
 
     
   </style>
+
+  <script>
+    function setVhUnit() {
+      const vh = window.innerHeight * 0.01;
+      document.documentElement.style.setProperty('--vh', `${vh}px`);
+    }
+    window.addEventListener('resize', setVhUnit);
+    window.addEventListener('load', setVhUnit);
+  </script>
 
 </head>
 <body>
