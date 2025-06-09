@@ -41,7 +41,6 @@ async function initializeMetrics() {
       const { error: insertError } = await supabase
         .from('metrics')
         .insert([{ id: 1, pageViews: 0, messageCount: 0 }]);
-
       if (insertError) {
         console.error('데이터 삽입 오류:', insertError.message);
       } else {
