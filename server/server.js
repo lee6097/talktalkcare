@@ -23,10 +23,6 @@ const openai = new OpenAI({
 });
 
 const systemPrompt = process.env.SYSTEM_PROMPT;
-const fullMessages = [
-  { role: "system", content: systemPrompt },
-  ...messages
-];
 
 // 메모리에서 관리되는 숫자
 let pageViews = 0;
@@ -91,10 +87,16 @@ app.post('/chat', async (req, res) => {
   console.log('Message Count:', messageCount);
 
   const { messages } = req.body;
+
+  const fullMessages = [
+    { role: "system", content: systemPrompt },  // dotenv에서 불러온 프롬프트
+    ...messages                                 // 사용자 입력들
+  ];
+
   try {
     const completion = await openai.chat.completions.create({
       model: 'gpt-4.1-mini',
-      messages: fullMessages,  // 여기로 교체!
+      messages: fullMessages,  // 여기에 위에서 만든 fullMessages 사용
     });
     res.json({ reply: completion.choices[0].message.content });
   } catch (err) {
@@ -102,6 +104,7 @@ app.post('/chat', async (req, res) => {
     res.status(500).send('OpenAI 오류');
   }
 });
+
 
 // 관리자만 볼 수 있는 페이지
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
