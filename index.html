@@ -177,6 +177,8 @@
     const micBtn = document.getElementById('micBtn');
     const sendBtn = document.getElementById('sendBtn');
 
+    const messages = [];
+
     window.addEventListener('DOMContentLoaded', () => {
       const welcome = "반갑습니다. 똑똑한 AI 건강 상담사 톡톡케어입니다. 현재 가장 불편한 증상 또는 궁금한 건강지식을 입력해주세요.";
       appendBubble(welcome, 'ai');
