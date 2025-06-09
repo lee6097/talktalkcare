@@ -22,6 +22,12 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
+const systemPrompt = process.env.SYSTEM_PROMPT;
+const fullMessages = [
+  { role: "system", content: systemPrompt },
+  ...messages
+];
+
 // 메모리에서 관리되는 숫자
 let pageViews = 0;
 let messageCount = 0;
@@ -88,7 +94,7 @@ app.post('/chat', async (req, res) => {
   try {
     const completion = await openai.chat.completions.create({
       model: 'gpt-4.1-mini',
-      messages: messages,
+      messages: fullMessages,  // 여기로 교체!
     });
     res.json({ reply: completion.choices[0].message.content });
   } catch (err) {
