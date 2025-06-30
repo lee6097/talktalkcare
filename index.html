@@ -416,10 +416,9 @@
             userInput.value = fullTranscript + (!event.results[event.results.length - 1].isFinal ? transcript : '');
         });
 
-        // ✅ 기존의 end 이벤트 리스너를 아래 코드로 교체해주세요.
         recognition.addEventListener('end', () => {
             if (isManuallyStopped) {
-                // 사용자가 수동으로 중단한 경우의 로직 (기존과 동일)
+                // 수동 중단이면 입력 전송
                 micBtn.disabled = false;
                 micBtn.textContent = '🎤';
                 userInput.classList.remove('listening');
@@ -433,22 +432,9 @@
                     userInput.value = '';
                 }
             } else {
-                // 자동 종료된 경우의 로직 (아이패드에서만 다르게 처리)
+                // 자동 종료된 경우: 공백 추가 후 다시 시작
                 fullTranscript += ' ';
-
-                // ✅ 아이패드인지 확인하는 로직 추가
-                const isIPad = /iPad/i.test(navigator.userAgent);
-
-                if (isIPad) {
-                    // 아이패드일 경우, 250ms(0.25초)의 지연을 주고 재시작
-                    // 이 지연 시간이 WKWebView가 오디오 세션을 정리할 시간을 벌어줍니다.
-                    setTimeout(() => {
-                        recognition.start();
-                    }, 250);
-                } else {
-                    // 아이패드가 아닌 다른 환경(아이폰, 안드로이드 등)에서는 기존처럼 즉시 재시작
-                    recognition.start();
-                }
+                recognition.start();
             }
         });
 
