@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Device Speech Recognition Test</title>
+    <style>
+        body { margin: 0; display: flex; flex-direction: column; height: 100vh; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif; }
+        .main { flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        #micBtn { font-size: 3rem; width: 80px; height: 80px; border-radius: 50%; border: 1px solid #ccc; }
+        #result { margin-top: 20px; font-size: 1.5rem; color: #333; padding: 0 20px; }
+        #log-container { position: fixed; bottom: 0; left: 0; width: 100%; height: 150px; background: #111; color: #0f0; font-family: monospace; font-size: 12px; overflow-y: scroll; border-top: 2px solid #333; box-sizing: border-box; padding: 5px; }
+    </style>
+</head>
+<body>
+    <div class="main">
+        <button id="micBtn">🎤</button>
+        <p id="result">버튼을 누르고 말하세요.</p>
+    </div>
+    <div id="log-container"></div>
+
+    <script>
+        const micBtn = document.getElementById('micBtn');
+        const resultP = document.getElementById('result');
+        const logContainer = document.getElementById('log-container');
+
+        // 화면에 로그를 기록하는 '블랙박스' 함수
+        function log(message) {
+            const now = new Date();
+            const time = now.toTimeString().split(' ')[0] + '.' + now.getMilliseconds();
+            logContainer.innerHTML += `[${time}] ${message}<br>`;
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+
+        log('Page loaded. Initializing...');
+
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (SpeechRecognition) {
+            log('SpeechRecognition API is available.');
+            const recognition = new SpeechRecognition();
+            recognition.lang = 'ko-KR';
+
+            let isListening = false;
+
+            micBtn.addEventListener('click', () => {
+                log('Mic button clicked.');
+                try {
+                    if (isListening) {
+                        log('Stopping recognition...');
+                        recognition.stop();
+                    } else {
+                        log('Starting recognition...');
+                        recognition.start();
+                    }
+                } catch (e) {
+                    log(`ERROR in click handler: ${e.name} - ${e.message}`);
+                }
+            });
+
+            // 모든 이벤트를 감시하여 로그로 남깁니다.
+            recognition.onstart = () => {
+                log('EVENT: onstart - Recognition has started.');
+                isListening = true;
+                micBtn.textContent = '⏹️';
+                resultP.textContent = '듣고 있어요...';
+            };
+            
+            recognition.onend = () => {
+                log('EVENT: onend - Recognition has ended.');
+                isListening = false;
+                micBtn.textContent = '🎤';
+                resultP.textContent = '버튼을 누르고 말하세요.';
+            };
+            
+            recognition.onerror = (event) => {
+                log(`EVENT: onerror - ERROR DETECTED!`);
+                log(`Error type: ${event.error}`);
+                log(`Error message: ${event.message}`);
+                resultP.textContent = `오류 발생: ${event.error}`;
+            };
+            
+            recognition.onsoundstart = () => log('EVENT: onsoundstart - Sound detected.');
+            recognition.onspeechstart = () => log('EVENT: onspeechstart - Speech detected.');
+            recognition.onspeechend = () => log('EVENT: onspeechend - Speech finished.');
+            recognition.onresult = (event) => {
+                let transcript = event.results[event.resultIndex][0].transcript;
+                log(`EVENT: onresult - Transcript: ${transcript}`);
+                resultP.textContent = transcript;
+            };
+
+        } else {
+            log('SpeechRecognition API NOT available.');
+            micBtn.disabled = true;
+            resultP.textContent = '음성 인식을 지원하지 않습니다.';
+        }
+    </script>
+</body>
+</html>
