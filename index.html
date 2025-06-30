@@ -379,9 +379,16 @@
         let isListening = false;
         let isManuallyStopped = false;
         let fullTranscript = '';
+        let isButtonLocked = false; // 🔐 고스트 클릭 방지용
 
         micBtn.addEventListener('click', () => {
-            if (!recognition) return;
+            if (!recognition || isButtonLocked) return;
+
+            // 🔐 클릭 후 200ms 동안 버튼 동작 막기
+            isButtonLocked = true;
+            setTimeout(() => {
+                isButtonLocked = false;
+            }, 200);
 
             if (isListening) {
                 // 사용자가 수동으로 중단
@@ -453,7 +460,7 @@
         micBtn.title = "브라우저에서 음성 인식을 지원하지 않습니다";
     }
 
-
+    
     // ⌨️ 엔터 키 처리
     document.addEventListener('DOMContentLoaded', () => {
       const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
