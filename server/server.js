@@ -132,7 +132,7 @@ app.post('/chat', async (req, res) => {
           { role: 'assistant', content: reply },
           { 
               role: 'user', 
-              content: "참고문헌을 제시하기 위해, 위 대화 전체의 핵심 주제(마지막 답변 중심)를 2~4단어의 구글 검색어로 만들어줘."
+              content: "참고문헌을 제시하기 위해, 위 대화 전체의 핵심 주제(마지막 답변 중심)를 2~4단어의 영어 구글 검색어로 만들어줘."
           }
       ];
 
