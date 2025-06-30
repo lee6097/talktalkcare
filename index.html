@@ -379,16 +379,9 @@
         let isListening = false;
         let isManuallyStopped = false;
         let fullTranscript = '';
-        let isButtonLocked = false; // 🔐 고스트 클릭 방지용
 
         micBtn.addEventListener('click', () => {
-            if (!recognition || isButtonLocked) return;
-
-            // 🔐 클릭 후 200ms 동안 버튼 동작 막기
-            isButtonLocked = true;
-            setTimeout(() => {
-                isButtonLocked = false;
-            }, 200);
+            if (!recognition) return;
 
             if (isListening) {
                 // 사용자가 수동으로 중단
