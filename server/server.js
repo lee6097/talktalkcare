@@ -1,156 +1,515 @@
-const express = require('express');
-const cors = require('cors');
-const bodyParser = require('body-parser');
-const OpenAI = require('openai');
-const path = require('path');
-const axios = require('axios');
-require('dotenv').config();
-
-const { createClient } = require('@supabase/supabase-js');
-
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-);
-
-const app = express();
-app.use(cors({ origin: 'https://lee6097.github.io' }));
-app.use(bodyParser.json());
-
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-const systemPrompt = process.env.SYSTEM_PROMPT;
-
-let pageViews = 0;
-let messageCount = 0;
-
-async function initializeMetrics() {
-  const { data, error } = await supabase
-    .from('metrics')
-    .select('*')
-    .eq('id', 1)
-    .single();
-
-  if (error) {
-    if (error.message.includes('no rows returned')) {
-      await supabase.from('metrics').insert([{ id: 1, pageViews: 0, messageCount: 0 }]);
-    } else {
-      console.error('초기화 오류:', error.message);
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>톡톡케어</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      font-family: 'Arial', sans-serif;
+      background: #f5f5f5;
+      display: flex;
+      justify-content: center;
+      align-items: center;
     }
-  } else if (data) {
-    pageViews = data.pageViews || 0;
-    messageCount = data.messageCount || 0;
-  }
-}
-
-async function updateMetrics() {
-  const { error } = await supabase
-    .from('metrics')
-    .update({ pageViews, messageCount })
-    .eq('id', 1);
-
-  if (error) console.error('Supabase 업데이트 오류:', error.message);
-}
-
-// ✅ Google 검색 함수
-async function searchGoogle(query) {
-  const apiKey = process.env.GOOGLE_SEARCH_API_KEY;
-  const cx = process.env.GOOGLE_SEARCH_CX;
-  const url = `https://www.googleapis.com/customsearch/v1?q=${encodeURIComponent(query)}&key=${apiKey}&cx=${cx}`;
-
-  try {
-    const response = await axios.get(url);
-    const items = response.data.items;
-    if (items && items.length > 0) {
-      return items.slice(0, 2).map(item => `- [${item.title}](${item.link})`).join('\n');
-    } else {
-      return '';
+    #chatbox {
+      width: 100vw;
+      max-width: 600px;
+      height: calc(var(--vh, 1vh) * 100); /* 수정된 부분 */
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      background: white;
+      padding: 10px;
+      box-sizing: border-box;
     }
-  } catch (error) {
-    console.error('Google 검색 오류:', error.message);
-    return '';
-  }
-}
+    #chat {
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      flex-grow: 1;
+      margin-bottom: 10px;
+    }
+    .bubble-container {
+      display: inline-flex; /* ✅ block → inline-block처럼 동작 */
+      align-items: flex-end;
+      margin: 8px 0;
+    }
+    .bubble {
+      padding: 10px 14px;
+      border-radius: 10px;
+      max-width: 65%;
+      word-wrap: break-word;
+      position: relative;
+    }
+    .user {
+      background: #d1e7ff;
+      align-self: flex-end;
+      margin-left: auto;
+    }
+    .ai {
+      background: #eee;
+      align-self: flex-start;
+      margin-right: 1px;
+    }
+    #inputForm {
+      display: flex;
+      gap: 8px;
+    }
+    #userInput {
+      flex: 1;
+      padding: 8px 10px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 0.9em;
+      line-height: 1.4;
+      resize: none;
+      overflow-y: auto;
+      min-height: 20px;
+      max-height: 60px;
+      height: auto;
+    }
+    button {
+      padding: 8px 12px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    button[type="submit"] {
+      background: #0078d7;
+      color: white;
+    }
+    button[type="submit"]:hover {
+      background: #005fa3;
+    }
+    #micBtn {
+      background: #28a745;
+      color: white;
+    }
+    #micBtn:hover {
+      background: #1e7e34;
+    }
+    .reset-btn {
+      background: #888;
+      color: white;
+    }
+    .reset-btn:hover {
+      background: #666;
+    }
+    .copy-btn {
+      font-size: 10px;
+      padding: 1px 4px;
+      background: transparent;
+      color: #666;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      cursor: pointer;
+      height: 20px;
+      margin: 0 4px;
+      flex-shrink: 0;
+    }
+    .copy-btn:hover {
+      background: #eee;
+    }
+    .button-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .small-btn {
+      font-size: 0.8em;
+      padding: 6px 10px;
+      flex: 1;
+      white-space: nowrap;
+    }
 
-// ✅ 메인 채팅 API
-app.post('/chat', async (req, res) => {
-  messageCount++;
-  await updateMetrics();
-  const { messages } = req.body;
+    @keyframes blinkInput {
+      0%, 100% { opacity: 0.8; }
+      50% { opacity: 0.2; }
+    }
 
-  const fullMessages = [
-    { role: "system", content: systemPrompt },
-    ...messages
-  ];
+    #userInput.listening {
+      animation: blinkInput 1s infinite;
+    }
 
-  try {
-    // 1. 기본 응답 생성
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-4.1-mini',
-      messages: fullMessages
+    .button-column {
+      display: flex;
+      flex-direction: column;
+      gap: 6px; /* 버튼들 사이 간격 */
+      margin-left: 8px;
+    }
+
+    
+  </style>
+
+  <script>
+    function setVhUnit() {
+      const vh = window.innerHeight * 0.01;
+      document.documentElement.style.setProperty('--vh', `${vh}px`);
+    }
+    window.addEventListener('resize', setVhUnit);
+    window.addEventListener('load', setVhUnit);
+  </script>
+
+</head>
+<body>
+  <div id="chatbox">
+    <div id="chat"></div>
+    <form id="inputForm">
+      <textarea id="userInput" rows="1" enterkeyhint="newline"></textarea>
+      <button type="button" id="micBtn" title="음성 입력">🎤</button>
+      <button type="submit" id="sendBtn" title="보내기">✉️</button>
+    </form>
+    <div class="button-row">
+      <button class="reset-btn small-btn" onclick="location.reload()">🔄 대화 초기화</button>
+      <button class="allcopy-btn small-btn" onclick="copyAll()">📝 전체 복사</button>
+    </div>
+  </div>
+
+  <script>
+    const chat = document.getElementById('chat');
+    const form = document.getElementById('inputForm');
+    const userInput = document.getElementById('userInput');
+    const micBtn = document.getElementById('micBtn');
+    const sendBtn = document.getElementById('sendBtn');
+
+    const messages = [];
+
+    window.addEventListener('DOMContentLoaded', () => {
+      const welcome = "반갑습니다. 똑똑한 AI 건강 상담사 톡톡케어입니다. 현재 가장 불편한 증상 또는 궁금한 건강지식을 입력해주세요.";
+      appendBubble(welcome, 'ai');
     });
-    const reply = completion.choices[0].message.content;
 
-    // 2. 마지막 발화 여부 판단
-    const userQuestion = messages[messages.length - 1]?.content || '';
-    const checkFinal = await openai.chat.completions.create({
-      model: 'gpt-4.1-mini',
-      messages: [
-        {
-          role: "system",
-          content: "이 메시지가 건강 상담 대화의 마지막에 해당하는가? 적절하면 'yes', 아니라면 'no'만 소문자로 대답해."
-        },
-        {
-          role: "user",
-          content: userQuestion
+    form.onsubmit = async (e) => {
+      e.preventDefault();
+      const text = userInput.value.trim();
+      if (!text || text === "🗣️ 음성을 입력하세요...") return;
+
+      appendBubble(text, 'user');
+      messages.push({ role: 'user', content: text });
+      userInput.value = '';
+      userInput.disabled = true;
+
+      appendBubble('⏳ 답변 작성 중... 최대 1분까지 소요될 수 있습니다.', 'ai');
+
+      try {
+        const res = await fetch('https://talktalkcare-server.onrender.com/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ messages })
+        });
+
+        const data = await res.json();
+        removeLastBubble();
+        messages.push({ role: 'assistant', content: data.reply });
+        appendBubble(data.reply, 'ai');
+      } catch (err) {
+        removeLastBubble();
+        appendBubble('⚠️ 오류가 발생했어요. 다시 시도해 주세요.', 'ai');
+      } finally {
+        userInput.disabled = false;
+        userInput.focus();
+      }
+    };
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.appendChild(document.createTextNode(text));
+      return div.innerHTML.replace(/\n/g, "<br>");
+    }
+
+    function appendBubble(text, sender) {
+      const container = document.createElement('div');
+      container.className = `bubble-container ${sender}-container`;
+
+      const bubble = document.createElement('div');
+      bubble.className = `bubble ${sender}`;
+      bubble.innerHTML = escapeHtml(text);
+
+      const copyBtn = document.createElement('button');
+      copyBtn.className = 'copy-btn';
+      copyBtn.textContent = '📋 복사';
+      copyBtn.onclick = () => copyToClipboard(text);
+
+      const speakBtn = document.createElement('button');
+      speakBtn.className = 'copy-btn';
+      speakBtn.textContent = '📢 음성';
+      speakBtn.onclick = () => speakText(text, speakBtn);
+
+      const btnColumn = document.createElement('div');
+      btnColumn.className = 'button-column';
+      btnColumn.appendChild(speakBtn);
+      btnColumn.appendChild(copyBtn);
+
+      if (sender === 'user') {
+        container.appendChild(bubble);
+      } else {
+        container.appendChild(bubble);
+        container.appendChild(btnColumn);
+      }
+
+      chat.appendChild(container);
+      chat.scrollTop = chat.scrollHeight;
+    }
+
+    function removeLastBubble() {
+      const last = chat.lastElementChild;
+      if (last) chat.removeChild(last);
+    }
+
+    function copyToClipboard(text) {
+      const temp = document.createElement('textarea');
+      temp.value = text;
+      document.body.appendChild(temp);
+      temp.select();
+      document.execCommand('copy');
+      document.body.removeChild(temp);
+    }
+
+    let currentSpeakingBtn = null;
+
+    function speakText(rawText, button) {
+      if (!('speechSynthesis' in window)) {
+        alert('🔈 음성 합성을 지원하지 않는 브라우저입니다.');
+        return;
+      }
+
+      if (currentSpeakingBtn === button) {
+        stopSpeech();
+        return;
+      }
+
+      if (currentSpeakingBtn) {
+        window.speechSynthesis.cancel();
+        resetSpeechState();
+      }
+
+      setTimeout(() => {
+        currentSpeakingBtn = button;
+        button.textContent = '⏹️ 중지';
+
+        const cleaned = rawText
+          .replace(/\([^)]*\)/g, '')         
+          .replace(/[*#\-⚠️⏳]/g, '')         
+          .trim();   
+
+        const sentences = cleaned
+          .split(/[\.\!\?]+[\s\n]+|\n+/)
+          .filter(s => s.trim().length > 0);
+
+        if (sentences.length === 0) {
+          resetSpeechState();
+          return;
         }
-      ]
-    });
 
-    const isFinal = checkFinal.choices[0].message.content.trim().toLowerCase().includes('yes');
+        let index = 0;
 
-    // 3. 출처 붙이기
-    if (isFinal) {
-      const links = await searchGoogle(userQuestion);
-      if (links) {
-        return res.json({ reply: `${reply}\n\n🔗 출처:\n${links}` });
+        function speakNext() {
+          if (index >= sentences.length) {
+            resetSpeechState();
+            return;
+          }
+
+          const utter = new SpeechSynthesisUtterance(sentences[index].trim());
+          utter.lang = 'ko-KR';
+
+          utter.onend = () => {
+            index++;
+            speakNext();
+          };
+
+          utter.onerror = () => {
+            resetSpeechState();
+          };
+
+          window.speechSynthesis.speak(utter);
+        }
+
+        speakNext();
+      }, 100);
+    }
+
+    function stopSpeech() {
+      window.speechSynthesis.cancel();
+      resetSpeechState();
+    }
+
+    function resetSpeechState() {
+      if (currentSpeakingBtn) {
+        currentSpeakingBtn.textContent = '📢 음성';
+        currentSpeakingBtn = null;
       }
     }
 
-    return res.json({ reply });
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('OpenAI 오류');
-  }
-});
+    window.addEventListener('beforeunload', () => {
+      window.speechSynthesis.cancel();
+    });
 
-// 📈 조회수
-app.get('/view', async (req, res) => {
-  pageViews++;
-  await updateMetrics();
-  res.sendStatus(200);
-});
+    function copyAll() {
+      let allMessages = '';
+      const containers = document.getElementsByClassName('bubble-container');
 
-// 📄 루트
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '../index.html'));
-});
+      for (let container of containers) {
+        const bubble = container.querySelector('.bubble');
+        if (!bubble) continue;
 
-// 🔐 관리자 페이지
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
-app.get('/admin', (req, res) => {
-  const { password } = req.query;
-  if (password !== ADMIN_PASSWORD) {
-    return res.status(403).send('❌ 접근 불가');
-  }
-  res.json({ pageViews, messageCount });
-});
+        const isUser = bubble.classList.contains('user');
+        const label = isUser ? '사용자' : '톡톡케어';
+        const text = bubble.innerText.trim();
 
-// 🚀 서버 실행
-async function startServer() {
-  await initializeMetrics();
-  app.listen(3000, () => {
-    console.log('✅ 서버가 3000번 포트에서 실행 중입니다');
-  });
-}
+        allMessages += `${label}: ${text}\n\n`;
+      }
 
-startServer();
+      copyToClipboard(allMessages.trim());
+    }
+
+    // 🎤 음성 인식
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const recognition = SpeechRecognition ? new SpeechRecognition() : null;
+
+    if (recognition) {
+        recognition.lang = 'ko-KR';
+        recognition.interimResults = true;
+        recognition.maxAlternatives = 1;
+
+        let isListening = false;
+        let isManuallyStopped = false;
+        let fullTranscript = '';
+
+        micBtn.addEventListener('click', () => {
+            if (!recognition) return;
+
+            if (isListening) {
+                // 사용자가 수동으로 중단
+                isManuallyStopped = true;
+                recognition.stop();
+                return;
+            }
+
+            // 음성 인식 시작
+            isManuallyStopped = false;
+            isListening = true;
+            fullTranscript = '';
+            micBtn.disabled = false;
+            micBtn.textContent = '⏹️';
+            userInput.value = '';
+            userInput.classList.add('listening');
+            userInput.disabled = true;
+            sendBtn.disabled = true;
+            recognition.start();
+        });
+
+        recognition.addEventListener('result', (event) => {
+            let transcript = '';
+            for (let i = event.resultIndex; i < event.results.length; ++i) {
+                transcript += event.results[i][0].transcript;
+            }
+
+            if (event.results[event.results.length - 1].isFinal) {
+                fullTranscript += transcript;
+            }
+
+            userInput.value = fullTranscript + (!event.results[event.results.length - 1].isFinal ? transcript : '');
+        });
+
+        recognition.addEventListener('end', () => {
+            if (isManuallyStopped) {
+                // 수동 중단이면 입력 전송
+                micBtn.disabled = false;
+                micBtn.textContent = '🎤';
+                userInput.classList.remove('listening');
+                userInput.disabled = false;
+                sendBtn.disabled = false;
+                isListening = false;
+
+                if (userInput.value.trim()) {
+                    form.dispatchEvent(new Event('submit'));
+                } else {
+                    userInput.value = '';
+                }
+            } else {
+                // 자동 종료된 경우: 공백 추가 후 다시 시작
+                fullTranscript += ' ';
+                recognition.start();
+            }
+        });
+
+        recognition.addEventListener('error', (e) => {
+            alert('🎤 음성 인식 오류: ' + e.error);
+            micBtn.disabled = false;
+            micBtn.textContent = '🎤';
+            userInput.classList.remove('listening');
+            userInput.disabled = false;
+            sendBtn.disabled = false;
+            isListening = false;
+        });
+
+    } else {
+        micBtn.disabled = true;
+        micBtn.title = "브라우저에서 음성 인식을 지원하지 않습니다";
+    }
+
+
+
+
+    // ⌨️ 엔터 키 처리
+    document.addEventListener('DOMContentLoaded', () => {
+      const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+      userInput.addEventListener('keydown', function (e) {
+        if (!isMobile && e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          form.dispatchEvent(new Event('submit'));
+        }
+      });
+
+      userInput.addEventListener('input', () => {
+        userInput.style.height = 'auto';
+        const computed = window.getComputedStyle(userInput);
+        const maxHeight = parseFloat(computed.maxHeight);
+        const newHeight = Math.min(userInput.scrollHeight, maxHeight);
+        userInput.style.height = newHeight + 'px';
+        userInput.style.overflowY = userInput.scrollHeight > maxHeight ? 'auto' : 'hidden';
+      });
+    });
+  </script>
+
+  <!-- 관리자 -->
+  <button onclick="openAdmin()" style="display:none;" id="adminBtn">📊 관리자 페이지</button>
+  <script>
+    async function openAdmin() {
+      const password = prompt("🔐 관리자 비밀번호를 입력하세요");
+      const res = await fetch(`https://talktalkcare-server.onrender.com/admin?password=${encodeURIComponent(password)}`);
+      if (res.ok) {
+        const data = await res.json();
+        alert(`📊 페이지 조회수: ${data.pageViews}\n💬 메시지 수: ${data.messageCount}`);
+      } else {
+        alert('❌ 비밀번호가 틀렸습니다.');
+      }
+    }
+  </script>
+
+  <!-- 조회수 -->
+  <script>
+    fetch('https://talktalkcare-server.onrender.com/view');
+  </script>
+
+  <script>
+    let isFormDirty = false;
+
+    document.getElementById('userInput').addEventListener('input', () => {
+      isFormDirty = true;
+    });
+
+    window.addEventListener('beforeunload', function (e) {
+      if (isFormDirty) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    });
+  </script>
+</body>
+</html>
