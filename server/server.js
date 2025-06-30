@@ -132,12 +132,12 @@ app.post('/chat', async (req, res) => {
           { role: 'assistant', content: reply },
           { 
               role: 'user', 
-              content: "위 대화 전체의 핵심 주제(마지막 답변 중심)를 5단어 이내의 간결한 구글 검색어로 만들어줘."
+              content: "참고문헌을 제시하기 위해, 위 대화 전체의 핵심 주제(마지막 답변 중심)를 2~4단어의 구글 검색어로 만들어줘."
           }
       ];
 
       const queryCompletion = await openai.chat.completions.create({
-          model: 'gpt-4.1-mini',
+          model: 'gpt-4.1',
           messages: querySynthesisMessages,
           max_tokens: 20 
       });
@@ -155,14 +155,22 @@ app.post('/chat', async (req, res) => {
         num: 3
       });
 
-      const searchResult = searchResponse.data.items ? searchResponse.data.items[0] : null;
+      // 구글 검색 결과 전체를 'searchResults' 상자에 담습니다.
+      const searchResults = searchResponse.data.items;
 
-      // 검색 결과가 있다면,
-      if (searchResult && searchResult.link) {
-        const sourceUrl = searchResult.link;
-        console.log(`찾은 출처: ${sourceUrl}`);
-        // 5. 기존 답변의 맨 뒤에, 찾은 출처를 덧붙입니다.
-        reply += `\n\n---\n**참고문헌:** ${sourceUrl}`;
+      // 검색 결과가 하나라도 있다면,
+      if (searchResults && searchResults.length > 0) {
+        
+        // 5. 찾은 출처들을 번호가 매겨진 목록으로 만듭니다.
+        // 예: 1. https://... \n 2. https://...
+        const sourceList = searchResults
+          .map((item, index) => `${index + 1}. ${item.link}`)
+          .join('\n'); // 각 링크를 줄바꿈(\n)으로 연결합니다.
+
+        console.log(`찾은 출처 목록:\n${sourceList}`);
+        
+        // 6. 기존 답변의 맨 뒤에, 완성된 출처 목록을 덧붙입니다.
+        reply += `\n\n---\n**참고문헌:**\n${sourceList}`;
       }
     }
 
