@@ -170,7 +170,7 @@ app.post('/chat', async (req, res) => {
         console.log(`찾은 출처 목록:\n${sourceList}`);
         
         // 6. 기존 답변의 맨 뒤에, 완성된 출처 목록을 덧붙입니다.
-        reply += `\n\n---\n**참고문헌:**\n${sourceList}`;
+        reply += `\n\n---\n참고문헌:\n${sourceList}`\n등;
       }
     }
 
