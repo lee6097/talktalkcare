@@ -18,13 +18,14 @@
     #chatbox {
       width: 100vw;
       max-width: 600px;
-      height: calc(var(--vh, 1vh) * 100); /* 수정된 부분 */
+      height: calc(var(--vh, 1vh) * 100);
       display: flex;
       flex-direction: column;
       justify-content: space-between;
       background: white;
       padding: 10px;
       box-sizing: border-box;
+      position: relative; 
     }
     #chat {
       display: flex;
@@ -34,7 +35,7 @@
       margin-bottom: 10px;
     }
     .bubble-container {
-      display: inline-flex; /* ✅ block → inline-block처럼 동작 */
+      display: inline-flex;
       align-items: flex-end;
       margin: 8px 0;
     }
@@ -128,22 +129,40 @@
     }
 
     @keyframes blinkInput {
-      0%, 100% { opacity: 0.8; }
-      50% { opacity: 0.2; }
+      0%, 100% { opacity: 0.95; }
+      50% { opacity: 0.75; }
     }
 
-    #userInput.listening {
+    /* ✅ 수정된 부분: 깜빡임 효과의 대상을 #voice-popup으로 변경 */
+    #voice-popup.listening {
       animation: blinkInput 1s infinite;
     }
 
     .button-column {
       display: flex;
       flex-direction: column;
-      gap: 6px; /* 버튼들 사이 간격 */
+      gap: 6px; 
       margin-left: 8px;
     }
-
     
+    #voice-popup {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%); /* 정중앙 배치 */
+      width: 80%;
+      max-width: 320px;
+      background: rgba(40, 167, 69, 0.9);
+      color: white;
+      display: none; /* 평소엔 숨김 */
+      padding: 20px;
+      border-radius: 12px;
+      text-align: center;
+      font-size: 1em;
+      line-height: 1.6;
+      z-index: 10;
+      pointer-events: none; /* 팝업 뒤로 클릭이 가능하도록 설정 */
+    }
   </style>
 
   <script>
@@ -159,6 +178,11 @@
 <body>
   <div id="chatbox">
     <div id="chat"></div>
+
+    <div id="voice-popup">
+        🎤<br>음성 인식이 진행중입니다.<br>말씀이 끝나셨다면 음성 버튼을<br>다시 눌러 메시지를 전송하세요.
+    </div>
+
     <form id="inputForm">
       <textarea id="userInput" rows="1" enterkeyhint="newline"></textarea>
       <button type="button" id="micBtn" title="음성 입력">🎤</button>
@@ -176,6 +200,7 @@
     const userInput = document.getElementById('userInput');
     const micBtn = document.getElementById('micBtn');
     const sendBtn = document.getElementById('sendBtn');
+    const voicePopup = document.getElementById('voice-popup');
 
     const messages = [];
 
@@ -293,9 +318,9 @@
         button.textContent = '⏹️ 중지';
 
         const cleaned = rawText
-          .replace(/\([^)]*\)/g, '')         
-          .replace(/[*#\-⚠️⏳]/g, '')         
-          .trim();                           
+          .replace(/\([^)]*\)/g, '')        
+          .replace(/[*#\-⚠️⏳]/g, '')        
+          .trim();                        
 
         const sentences = cleaned
           .split(/[\.\!\?]+[\s\n]+|\n+/)
@@ -384,22 +409,21 @@
             if (!recognition) return;
 
             if (isListening) {
-                // 사용자가 수동으로 중단
                 isManuallyStopped = true;
                 recognition.stop();
                 return;
             }
 
-            // 음성 인식 시작
             isManuallyStopped = false;
             isListening = true;
             fullTranscript = '';
             micBtn.disabled = false;
             micBtn.textContent = '⏹️';
             userInput.value = '';
-            userInput.classList.add('listening');
             userInput.disabled = true;
             sendBtn.disabled = true;
+            voicePopup.style.display = 'block';
+            voicePopup.classList.add('listening'); // ✅ 수정된 부분
             recognition.start();
         });
 
@@ -418,13 +442,13 @@
 
         recognition.addEventListener('end', () => {
             if (isManuallyStopped) {
-                // 수동 중단이면 입력 전송
                 micBtn.disabled = false;
                 micBtn.textContent = '🎤';
-                userInput.classList.remove('listening');
                 userInput.disabled = false;
                 sendBtn.disabled = false;
                 isListening = false;
+                voicePopup.style.display = 'none';
+                voicePopup.classList.remove('listening'); // ✅ 수정된 부분
 
                 if (userInput.value.trim()) {
                     form.dispatchEvent(new Event('submit'));
@@ -432,7 +456,6 @@
                     userInput.value = '';
                 }
             } else {
-                // 자동 종료된 경우: 공백 추가 후 다시 시작
                 fullTranscript += ' ';
                 recognition.start();
             }
@@ -442,10 +465,11 @@
             alert('🎤 음성 인식 오류: ' + e.error);
             micBtn.disabled = false;
             micBtn.textContent = '🎤';
-            userInput.classList.remove('listening');
             userInput.disabled = false;
             sendBtn.disabled = false;
             isListening = false;
+            voicePopup.style.display = 'none';
+            voicePopup.classList.remove('listening'); // ✅ 수정된 부분
         });
 
     } else {
@@ -475,7 +499,6 @@
     });
   </script>
 
-  <!-- 관리자 -->
   <button onclick="openAdmin()" style="display:none;" id="adminBtn">📊 관리자 페이지</button>
   <script>
     async function openAdmin() {
@@ -490,7 +513,6 @@
     }
   </script>
 
-  <!-- 조회수 -->
   <script>
     fetch('https://talktalkcare-server.onrender.com/view');
   </script>
